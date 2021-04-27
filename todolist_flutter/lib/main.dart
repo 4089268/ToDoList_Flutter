@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:todolist_flutter/datos.dart';
 
 void main() {
   runApp(MaterialApp(
@@ -19,23 +20,70 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  List todos = List();
+  MyDataBase db = MyDataBase();
+  
   String input = "";
+  String desc = "";
 
   @override
   void initState(){
     super.initState();
-    todos.add("Item1");
   }
-
-  void agregarPendiente(){
+  _showList(BuildContext _context){
+    return FutureBuilder(
+      future: db.obtenerTareas(),
+      builder: (BuildContext context, AsyncSnapshot<List<Tarea>> snapshot){
+        if (snapshot.hasData){
+          return ListView(
+            children: <Widget>[
+              for(Tarea tarea in snapshot.data)
+                Card(
+                  elevation: 2,
+                  margin: EdgeInsets.all(8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(4)
+                  ),
+                  child: ListTile(
+                    title: Text(tarea.titulo),
+                    trailing: IconButton(
+                      icon: Icon(
+                        Icons.delete_rounded,
+                        color: Colors.red[400],
+                      ),
+                      onPressed:(){
+                        showDialog(context: context, builder: (BuildContext context){
+                          return(
+                            AlertDialog(
+                              title: Text("¿Seguro deseas eliminar este pendiente?"),
+                              actions:<Widget>[
+                                TextButton(onPressed: (){Navigator.of(context).pop();}, child: Text("Cancelar")),
+                                TextButton(onPressed: (){ eliminarPendiente(tarea.id); Navigator.of(context).pop();}, child: Text("Eliminar"))
+                              ],
+                            )
+                          );
+                        });
+                      },
+                    ),
+                  ),
+                )
+                
+            ],
+          );
+        }else{
+          return Center(child: Text("Sin Datos"));
+        }        
+      },
+    );
+  }
+  agregarPendiente(){
     setState(() {
-      todos.add(input);
+      Tarea tarea = Tarea.fromValues(input, desc);
+      db.insert(tarea);
     });
   }
-  void eliminarPendiente(int i){
+  eliminarPendiente(int i) {
     setState(() {
-      todos.removeAt(i);
+      db.eliminar(i);
     });
   }
 
@@ -52,13 +100,36 @@ class _MyAppState extends State<MyApp> {
             builder: (BuildContext context){
               return AlertDialog(
                 title:Text("Agregar Pendiente"),
-                content: TextField(
-                  onChanged: (String value){
-                    input = value;
-                  },
-                ),
+                content: Container(
+                  child: Column(
+                    children: <Widget>[
+                      TextField(
+                        style:  TextStyle(
+                          fontSize: 20.0                        
+                        ),
+                        decoration: InputDecoration(
+                          labelText: 'Titulo'
+                        ),
+                        onChanged: (String value){
+                          input = value;
+                        }
+                      ),
+                      TextField(
+                        keyboardType: TextInputType.multiline,
+                        minLines: 3,
+                        maxLines: null,
+                        decoration: InputDecoration(
+                          labelText: 'Descripcion'
+                        ),
+                        onChanged: (String value){
+                          desc = value;
+                        }
+                      )
+                    ],
+                  ),
+                ), 
                 actions: <Widget>[
-                  FlatButton(onPressed:(){
+                  TextButton(onPressed:(){
                     agregarPendiente();
                     Navigator.of(context).pop();
                   }, child: Text("Agregar"))
@@ -72,47 +143,18 @@ class _MyAppState extends State<MyApp> {
           color:Colors.white60
         )
       ),      
-      body: ListView.builder(
-        itemCount : todos.length,
-        itemBuilder:(BuildContext context, int index){
-          return Dismissible(
-            key: Key(todos[index]),
-            child: Card(
-              elevation: 2,
-              margin: EdgeInsets.all(8),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(4)
-              ),
-              child: ListTile(
-                title: Text(todos[index]),
-                trailing: IconButton(
-                  icon: Icon(
-                  Icons.delete_rounded,
-                  color: Colors.red,
-                  ),
-                  onPressed:(){
-                    showDialog(context: context, builder: (BuildContext context){
-                      return(
-                        AlertDialog(
-                          title: Text("¿Seguro deseas eliminar este pendiente?"),
-                          actions:<Widget>[
-                            FlatButton(onPressed: (){Navigator.of(context).pop();}, child: Text("Cancelar")),
-                            FlatButton(onPressed: (){
-                              eliminarPendiente(index);
-                              Navigator.of(context).pop();
-                              },child: Text("Eliminar"))
-                          ],
-                        )
-                      );
-                    });
-
-                  },
-                ),
-              ),
-            ),
-          );
+      body: FutureBuilder(
+        future: db.initDb(),
+        builder: (BuildContext context, snapshot){
+          if(snapshot.connectionState == ConnectionState.done){
+            return _showList(context);
+          }else{
+            return Center(
+              child: CircularProgressIndicator(),
+            );
+          }
         }
-      ),
+      )
     );
   }
 }
