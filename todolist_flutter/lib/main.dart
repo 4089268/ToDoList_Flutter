@@ -1,6 +1,6 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:todolist_flutter/datos.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 void main() {
   runApp(MaterialApp(
@@ -8,7 +8,6 @@ void main() {
       brightness: Brightness.light,
       primaryColor: Colors.blueGrey,
       accentColor: Colors.red[400]
-
     ),
     home: MyApp(),
   ));
@@ -18,17 +17,12 @@ class MyApp extends StatefulWidget {
   @override
   _MyAppState createState() => _MyAppState();
 }
-
 class _MyAppState extends State<MyApp> {
   MyDataBase db = MyDataBase();
   
   String input = "";
   String desc = "";
-
-  @override
-  void initState(){
-    super.initState();
-  }
+  
   _showList(BuildContext _context){
     return FutureBuilder(
       future: db.obtenerTareas(),
@@ -66,7 +60,6 @@ class _MyAppState extends State<MyApp> {
                     ),
                   ),
                 )
-                
             ],
           );
         }else{
@@ -86,12 +79,29 @@ class _MyAppState extends State<MyApp> {
       db.eliminar(i);
     });
   }
-
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text("Pendientes"),
+        actions: <Widget>[
+          TextButton(
+            child: Icon(Icons.info,color: Colors.blueGrey[700]),
+            onPressed: (){
+              showDialog(context: context, builder: (BuildContext context){
+                return(
+                  AlertDialog(
+                    content: TextButton(
+                      child: Text('Lista pendientes v1.0.1 \nDesarrollado por INTDEV'),
+                      onPressed: () => launch("http://www.intdev.net")
+                    ),
+                  )
+                );
+              });
+            },
+          )
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed:(){

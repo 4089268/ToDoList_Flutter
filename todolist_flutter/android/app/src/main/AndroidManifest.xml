@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.todolist_flutter">
    <application
-        android:label="todolist_flutter"
+        android:label="Lista Pendientes"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"
